@@ -28,6 +28,7 @@
 #  
 #Открыть файл
 setwd('/media/lavrentydanilov/Linux_Home/lavrentydanilov/Documents/Documents/IB/Teaching/2022-2023/Lecture_3/')
+setwd('/home/semiramis/Stat_Bio/La_1')
 path_to_file <- 'mc_donalds_data.csv'
 mc_menu_data <- read.csv(path_to_file,
   header = TRUE, sep = ',', encoding = 'UTF-8')
@@ -58,18 +59,32 @@ mc_mendu_data_withoutNA <- na.omit(mc_menu_data)
 #Отобрать 27 значение 5 столбца
 mc_mendu_data_withoutNA[27, 5]
 
+str(mc_mendu_data_withoutNA)
+
 ### TASK 1 
 
 #1.1 Отобрать все данные по категории "Snacks & Sides" (2 балла)
 
+new_df_1 <- subset(mc_menu_data, Category == "Snacks & Sides")
+
 #1.2 Отобрать все данные по категориям "Desserts" и "Salads" (2 балла)
+
+new_df_2 <- subset(mc_menu_data, Category == "Desserts" | Category == "Salads")
 
 #1.3 Отобрат все данные кроме категории "Breakfast" (2 балла)
 
+new_df_3 <- subset(mc_menu_data, Category != "Breakfast")
+
 #1.4 Посчитать число блюд, где калорийность больше чем 500 (2 балла)
+
+Calories_500 <- nrow(subset(mc_menu_data, Calories > 500))
 
 #1.5 Найти самое калорийное блюдо (2 балла)
 
+#Caloriest <- 
+
+new_df_5 <- mc_menu_data[order(mc_menu_data$Calories, decreasing = T),]
+Caloriest_dish <- new_df_5[1,]
 
 #Посчитать среднее и медиану для каждого столбца
 str(mc_mendu_data_withoutNA)
@@ -149,24 +164,43 @@ mac_data <- cbind(new_md, md %>% select(starts_with("Vit")))
 
 colnames(mac_data) <- c("Category", "Item", "Serving_size", "Calories", "Cal_Fat", "Total_Fat", "Satur_Fat", "Trans_Fat", "Cholesterol", "Sodium","Carbohydrates", "Dietary_fiber","Sugars", "Protein", "Vitamin_A_DV", "Vitamin_C_DV")
 
+str(mac_data)
 
 # # Практика по dplyr
 
 # Отберите только названия блюд с числом калорий больше 360
-dplyr_task_1 <- mac_data %>% filter(Calories > 360)
+
+dplyr_task_1 <- mac_data %>% 
+  filter(Calories > 360) %>% 
+  select(Item)
 
 ### TASK 2 
 
 #2.1 Найдите число блюд в каждой из категорий, для которых витаминная ценность равна нулю (2 балла)
 
+dplyr_task_2 <- mac_data %>%
+  group_by(Category) %>% 
+  summarise(number_of_dishes = sum(Vitamin_A_DV + Vitamin_C_DV == 0))
+
 #2.2 Посчитайте долю калорий, приходящихся на жиры, для блюд из завтраков и округлите значения до 3 знака (2 балла)
+
+dplyr_task_3 <- mac_data %>% 
+  filter(Category == 'Breakfast') %>% 
+  mutate(Prop_of_fat = round(Cal_Fat / Calories, 3))
 
 #2.3 Посчитайте среднее значение, медиану и разницу между ними для холестерола (2 балла)
 
+dplyr_task_4 <- mac_data %>% 
+  summarise(mean_ch = mean(Cholesterol), 
+            median_ch = median(Cholesterol),
+            mean_minus_median_ch = mean_ch - median_ch)
+
 #2.4 Для каждой категории найдите блюдо с самым высоким отношением сахаров к углеводам (2 балла)
 
-
-
+dplyr_task_5 <- mac_data %>% 
+  group_by(Category) %>% 
+  arrange(desc(Sugars / Carbohydrates)) %>% 
+  filter(row_number()==1)
 
 
 # # Графика в R
@@ -203,6 +237,7 @@ library(RColorBrewer)
 library(DAAG)
 
 # Загрузим данные и немного их отредактируем
+leafshape <- read.csv("/home/semiramis/Stat_Bio/dataset-99647.csv")
 data("leafshape")
 leafshape$arch <- factor(leafshape$arch, labels = c("Plagiotropic", "Orthotropic"))
 
@@ -225,19 +260,27 @@ ggplot(leafshape, aes(bladelen, bladewid, color = location)) +
 ### TASK 3
 
 #3.1 Распределение (boxplot) длины листа, в зависимости от локации и архитектуры (5 баллов)
-ggplot(leafshape, aes(x = , y = , color = )) + 
+
+str(leafshape)
+
+ggplot(leafshape, aes(x = location, y = bladelen, color = arch)) + 
   geom_boxplot() + 
-  labs(x = , y = , title = , color = "Architecture") + 
-  theme() + 
-  theme_bw(16) 
+  labs(x = 'Location', y = "Leaf length", 
+       title = 'Dependence of location and \narchitecture on sheet length', 
+       color = "Architecture")  + 
+  theme_bw(16) +
+  theme(plot.title = element_text(hjust = 0.5))
 
 
 # Больше графиков богу графиков
 #3.2 Сложный график -- violin plot, с разделением по архитекутре листьев (5 баллов)
-ggplot() + 
-  geom_violin() + 
-  facet_grid() + 
-  labs() + 
-  theme_bw() + 
-  scale_fill_brewer(palette = "Dark2") + 
-  theme(axis.text.x = element_text(angle = , hjust = ))
+ggplot(leafshape, aes(location, bladelen, fill = location)) + 
+  geom_violin(show.legend = FALSE) + 
+  facet_grid(.~arch) + 
+  labs(x = 'Location', y = "Leaf length", 
+       title = 'Violin plot') + 
+  theme_bw(16) +
+  scale_fill_brewer(type = 'qual', palette = 3) + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = -45, hjust = 0.5))
+
